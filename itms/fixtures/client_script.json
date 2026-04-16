@@ -1,0 +1,57 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Daily Work Logs",
+  "enabled": 1,
+  "modified": "2026-03-06 22:17:49.831256",
+  "module": "ITMS",
+  "name": "Daily Logs",
+  "script": "frappe.ui.form.on('Daily Work Logs', {\r\n\r\n    refresh: function(frm) {\r\n        if (!frm.doc.intern) {\r\n            frappe.db.get_list(\"Intern\", {\r\n                filters: {\r\n                    user: frappe.session.user\r\n                },\r\n                fields: [\"name\", \"mentor\"],\r\n                limit: 1\r\n            }).then(function(records) {\r\n                if (records.length > 0) {\r\n                    frm.set_value(\"intern\", records[0].name);\r\n                    frm.set_value(\"mentor\", records[0].mentor);\r\n                }\r\n            });\r\n        }\r\n    }\r\n\r\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Daily Work Logs",
+  "enabled": 1,
+  "modified": "2026-04-05 18:17:20.774180",
+  "module": null,
+  "name": "Daily Work Log",
+  "script": "frappe.listview_settings[\"Daily Work Log\"] = {\r\n    onload(listview) {\r\n        // Only apply restrictions for Mentor role\r\n        if (!frappe.user.has_role(\"Mentor\")) return;\r\n\r\n        // Restrict the Intern filter field to only show assigned interns\r\n        frappe.call({\r\n            method: \"frappe.client.get_list\",\r\n            args: {\r\n                doctype: \"Intern\",\r\n                filters: { mentor: [\"in\", [frappe.session.user]] },\r\n                fields: [\"name\", \"intern_name\"],\r\n                limit: 50\r\n            },\r\n            callback(r) {\r\n                if (!r.message) return;\r\n                // Store for use in filter rendering\r\n                listview.assigned_interns = r.message.map(i => i.name);\r\n            }\r\n        });\r\n    }\r\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Daily Work Logs",
+  "enabled": 1,
+  "modified": "2026-04-05 18:17:14.383069",
+  "module": null,
+  "name": "DWL - Late Submission Flag",
+  "script": "frappe.listview_settings[\"Daily Work Logs\"] = {\r\n    get_indicator(doc) {\r\n        if (doc.is_late && doc.status === \"Submitted\") {\r\n            return [\"Late\", \"orange\", \"is_late,=,1\"];\r\n        }\r\n        if (doc.status === \"Approved\") {\r\n            return [\"Approved\", \"green\"];\r\n        }\r\n        if (doc.status === \"Rejected\") {\r\n            return [\"Rejected\", \"red\"];\r\n        }\r\n        if (doc.status === \"Reviewed\") {\r\n            return [\"Reviewed\", \"blue\"];\r\n        }\r\n        return [\"Submitted\", \"grey\"];\r\n    }\r\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Intern",
+  "enabled": 1,
+  "modified": "2026-04-07 23:24:33.886569",
+  "module": null,
+  "name": "Intern - Low Attendance Warning",
+  "script": "frappe.ui.form.on(\"Intern\", {\r\n    refresh(frm) {\r\n        // 1. Show warning banner if attendance is low\r\n        if (frm.doc.low_attendance) {\r\n            frm.dashboard.add_comment(\r\n                `⚠️ Low Attendance: ${frm.doc.attendance_percentage}% — Below 75% threshold`,\r\n                \"red\",\r\n                true\r\n            );\r\n        }\r\n\r\n        // 2. Trigger the data fetch and heatmap rendering\r\n        render_attendance_heatmap(frm);\r\n    }\r\n});\r\n\r\nfunction render_attendance_heatmap(frm) {\r\n    // Fetch the last 100 attendance records for this specific intern\r\n    frappe.call({\r\n        method: \"frappe.client.get_list\",\r\n        args: {\r\n            doctype: \"Intern Attendance\",\r\n            filters: { intern: frm.doc.name },\r\n            fields: [\"date\", \"status\"],\r\n            limit: 100\r\n        },\r\n        callback: function(r) {\r\n            let data = r.message || [];\r\n            draw_heatmap(frm, data);\r\n        }\r\n    });\r\n}\r\n\r\nfunction draw_heatmap(frm, data) {\r\n    let attendance_map = {};\r\n    data.forEach(d => {\r\n        attendance_map[d.date] = d.status;\r\n    });\r\n\r\n    let today = frappe.datetime.now_date();\r\n\r\n    // --- STREAK CALCULATOR LOGIC ---\r\n    let current_streak = 0;\r\n    for (let i = 0; i < 60; i++) {\r\n        let check_date_str = frappe.datetime.add_days(today, -i);\r\n        let check_date_obj = frappe.datetime.str_to_obj(check_date_str);\r\n        let status = attendance_map[check_date_str];\r\n\r\n        if (status === \"Present\") {\r\n            current_streak++;\r\n        } else if (check_date_obj.getDay() === 0) {\r\n            // getDay() === 0 means Sunday. Skip it without breaking the streak.\r\n            continue;\r\n        } else {\r\n            // If today isn't marked yet, don't penalize them and break the past streak.\r\n            if (i === 0 && !status) continue;\r\n            \r\n            // Any other missed day breaks the streak.\r\n            break;\r\n        }\r\n    }\r\n    // -------------------------------\r\n\r\n    let heatmap_html = `\r\n        <div style=\"margin-top: 15px; padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent;\">\r\n            \r\n            <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;\">\r\n                <h6 style=\"margin: 0; color: var(--text-color); font-weight: 600;\">Last 60 Days Activity</h6>\r\n                <span style=\"background: rgba(255, 153, 0, 0.1); color: #ff9900; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255, 153, 0, 0.3);\">\r\n                    🔥 Current Streak: ${current_streak} Days\r\n                </span>\r\n            </div>\r\n\r\n            <div style=\"display: flex; flex-wrap: wrap; gap: 5px;\">\r\n    `;\r\n\r\n    let start_date = frappe.datetime.add_days(today, -60);\r\n\r\n    // Draw the 60 boxes\r\n    for (let i = 0; i <= 60; i++) {\r\n        // THESE ARE THE TWO LINES YOU ACCIDENTALLY DELETED:\r\n        let current_date = frappe.datetime.add_days(start_date, i);\r\n        let status = attendance_map[current_date];\r\n\r\n        // Format the date for the tooltip\r\n        let formatted_date = frappe.datetime.str_to_user(current_date);\r\n\r\n        let color = \"var(--control-bg)\"; \r\n        let border = \"1px solid var(--border-color)\";\r\n        let tooltip = `${formatted_date} — No Record`;\r\n\r\n        if (status === \"Present\") {\r\n            color = \"#39d353\"; \r\n            border = \"1px solid #2ea043\";\r\n            tooltip = `${formatted_date} — Present`;\r\n        } else if (status === \"Absent\") {\r\n            color = \"#f85149\"; \r\n            border = \"1px solid #da3633\";\r\n            tooltip = `${formatted_date} — Absent`;\r\n        }\r\n\r\n        heatmap_html += `\r\n            <div title=\"${tooltip}\" style=\"\r\n                width: 16px;\r\n                height: 16px;\r\n                background-color: ${color};\r\n                border-radius: 3px;\r\n                border: ${border};\r\n                cursor: pointer;\r\n                transition: transform 0.1s ease;\r\n            \" onmouseover=\"this.style.transform='scale(1.2)'\" onmouseout=\"this.style.transform='scale(1)'\"></div>\r\n        `;\r\n    }\r\n\r\n    // Legend\r\n    heatmap_html += `\r\n            </div>\r\n            <div style=\"margin-top: 16px; display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); font-weight: 500;\">\r\n                <div style=\"display: flex; align-items: center; gap: 6px;\">\r\n                    <div style=\"width: 12px; height: 12px; background: #39d353; border-radius: 2px;\"></div> Present\r\n                </div>\r\n                <div style=\"display: flex; align-items: center; gap: 6px;\">\r\n                    <div style=\"width: 12px; height: 12px; background: #f85149; border-radius: 2px;\"></div> Absent\r\n                </div>\r\n                <div style=\"display: flex; align-items: center; gap: 6px;\">\r\n                    <div style=\"width: 12px; height: 12px; background: var(--control-bg); border: 1px solid var(--border-color); border-radius: 2px;\"></div> No Record\r\n                </div>\r\n            </div>\r\n        </div>\r\n    `;\r\n\r\n    // Inject into the HTML field\r\n    $(frm.fields_dict.attendance_heatmap.wrapper).html(heatmap_html);\r\n}",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Daily Work Logs",
+  "enabled": 1,
+  "modified": "2026-04-05 22:29:51.361984",
+  "module": null,
+  "name": "DWL - Skill Tags Display",
+  "script": "frappe.ui.form.on(\"Daily Work Logs\", {\r\n    refresh(frm) {\r\n        render_skill_tags(frm);\r\n    },\r\n    after_save(frm) {\r\n        render_skill_tags(frm);\r\n    }\r\n});\r\n\r\nfunction render_skill_tags(frm) {\r\n    // Remove previous tags wrapper if exists\r\n    $(frm.fields_dict.skills.wrapper).find('.skill-tags-wrapper').remove();\r\n\r\n    const skills = frm.doc.skills || [];\r\n    if (!skills.length) return;\r\n\r\n    // Build tag chips HTML\r\n    let tags_html = '<div class=\"skill-tags-wrapper\" style=\"display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;\">';\r\n    \r\n    skills.forEach(row => {\r\n        if (row.skill) {\r\n            tags_html += `\r\n                <span style=\"\r\n                    background:#e8f4fd;\r\n                    color:#185fa5;\r\n                    border:0.5px solid #85b7eb;\r\n                    border-radius:20px;\r\n                    padding:4px 12px;\r\n                    font-size:12px;\r\n                    font-weight:500;\r\n                \">${row.skill}</span>`;\r\n        }\r\n    });\r\n\r\n    tags_html += '</div>';\r\n\r\n    // Inject below the skills table\r\n    $(frm.fields_dict.skills.wrapper).append(tags_html);\r\n}",
+  "view": "Form"
+ }
+]
