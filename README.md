@@ -56,6 +56,7 @@ Reports / APIs
 -----------------------------------------------------------------------------------------------------------------
 
  Screenshots
+<img width="1420" height="875" alt="image" src="https://github.com/user-attachments/assets/bff3c7a3-bd1f-42c8-9f23-99393fce0d22" />
 
 
 
