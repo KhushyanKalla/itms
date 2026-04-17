@@ -56,8 +56,21 @@ Reports / APIs
 -----------------------------------------------------------------------------------------------------------------
 
  Screenshots
-<img width="1420" height="875" alt="image" src="https://github.com/user-attachments/assets/bff3c7a3-bd1f-42c8-9f23-99393fce0d22" />
+## 📸 Screenshots
 
+<p align="center">
+  <img width="800" alt="Screenshot 2026-04-17 150332" src="https://github.com/user-attachments/assets/37b092d5-b136-4d8d-a278-dd42cad606e7" />
+</p>
+
+<p align="center">
+  <img width="800" alt="image" src="https://github.com/user-attachments/assets/9ce195d2-b033-468e-832d-800f1e97936e" />
+
+</p>
+
+<p align="center">
+  <img width="800" alt="image" src="https://github.com/user-attachments/assets/ff6a75e9-8edb-4474-8a08-a8a22238dafb" />
+
+</p>
 
 
 -----------------------------------------------------------------------------------------------------------------
