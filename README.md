@@ -1,41 +1,82 @@
-### ITMS
+ITMS — Internship & Training Management System
 
-Internship Management System
+Overview
 
-### Installation
+ITMS is a role-based web application built using the Frappe Framework to manage internship workflows efficiently. It enables structured tracking of intern activities, mentor evaluation, and performance monitoring.
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+-----------------------------------------------------------------------------------------------------------------
+Problem Statement
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app itms
-```
+Traditional internship tracking is unstructured:
 
-### Contributing
+* No proper daily work monitoring
+* Lack of mentor visibility
+* No centralized performance tracking
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+ITMS solves this by providing a structured system.
 
-```bash
-cd apps/itms
-pre-commit install
-```
+-----------------------------------------------------------------------------------------------------------------
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+Features
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
+Intern
 
-### CI
+* Submit daily work logs
+* Track progress
+* View attendance
 
-This app can use GitHub Actions for CI. The following workflows are configured:
+Mentor
 
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
+* Review submissions
+* Provide feedback
+* Monitor performance
 
+ Admin
 
-### License
+* Manage users
+* Track attendance
+* Generate reports
 
-mit
+-----------------------------------------------------------------------------------------------------------------
+
+🧱 Tech Stack
+
+* Frappe Framework v15
+* Python
+* JavaScript
+* MariaDB
+
+-----------------------------------------------------------------------------------------------------------------
+
+ Architecture
+
+Intern → Frappe UI → Backend → MariaDB
+↓
+Reports / APIs
+
+---
+
+ 📸 Screenshots
+
+(We will add in next step)
+
+-----------------------------------------------------------------------------------------------------------------
+ Installation
+
+bench get-app https://github.com/KhushyanKalla/itms.git
+bench --site itms.local install-app itms
+bench migrate
+
+-----------------------------------------------------------------------------------------------------------------
+Notes
+
+ Some components are exported using fixtures (JSON-based)
+ Project is fully functional and installable
+
+-----------------------------------------------------------------------------------------------------------------
+
+Future Scope
+
+* Advanced analytics dashboard
+* Notification system
+* API integrations
