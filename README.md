@@ -38,8 +38,7 @@ Mentor
 * Generate reports
 
 -----------------------------------------------------------------------------------------------------------------
-
-🧱 Tech Stack
+ Tech Stack
 
 * Frappe Framework v15
 * Python
